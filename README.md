@@ -1,4 +1,4 @@
-# Jellyfin 文件大小过滤器插件
+# Jellyfin 文件大小过滤器插件（cursor写的，轻喷）
 
 ## 功能说明
 
@@ -17,6 +17,34 @@
 - ✅ 可随时启用/禁用过滤功能
 - ✅ 详细的日志记录
 - ✅ 默认过滤小于100MB的文件
+
+## 项目结构
+
+```
+jellyfin-filesize-filter/
+├── .git/                                    # Git仓库
+├── .gitignore                              # Git忽略文件
+├── Configuration/
+│   └── configPage.html                     # 插件配置页面
+├── FileSizeFilterPlugin.cs                 # 主插件类
+├── FileSizeScheduledTask.cs                # 手动执行任务
+├── FileSizePostScanTask.cs                 # 自动执行任务
+├── PluginConfiguration.cs                  # 配置类
+├── Jellyfin.Plugin.FileSizeFilter.csproj   # 项目文件
+├── README.md                               # 项目说明
+├── DEPLOYMENT.md                           # 部署指南
+├── build.sh                                # 构建脚本
+├── bin/                                    # 编译输出（被忽略）
+└── obj/                                    # 编译缓存（被忽略）
+```
+
+### 核心文件说明
+
+- **FileSizeFilterPlugin.cs**: 插件主类，提供基本信息和配置页面
+- **FileSizeScheduledTask.cs**: 实现计划任务接口，可在任务列表中手动执行
+- **FileSizePostScanTask.cs**: 实现库扫描后自动执行的任务
+- **PluginConfiguration.cs**: 配置类，定义插件设置项
+- **Configuration/configPage.html**: 中文配置界面，符合Jellyfin标准
 
 ## 编译方法
 
@@ -100,6 +128,23 @@ docker restart jellyfin
 4. 确保**启用文件大小过滤**被勾选
 5. 点击**保存配置**
 6. **重新扫描媒体库**以应用新的过滤规则
+
+## 工作机制
+
+### 执行方式
+- **自动执行**: 每次媒体库扫描完成后自动运行过滤
+- **手动执行**: 在"管理 → 任务"中找到"文件大小过滤器"手动执行
+
+### 工作流程
+1. 获取媒体库中所有视频和音频文件
+2. 逐个检查文件大小
+3. 将小于阈值的文件从媒体库中移除（仅移除显示记录）
+4. 物理文件保持不变，不会被删除
+
+### 对新增媒体的处理
+- ✅ 新增文件会自动受到过滤规则影响
+- ✅ 每次扫描后都会自动执行过滤
+- ✅ 无需手动干预
 
 ## 配置选项
 
