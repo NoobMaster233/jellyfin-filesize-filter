@@ -53,7 +53,7 @@ public class FileSizeFilterPlugin : BasePlugin<PluginConfiguration>, IHasWebPage
         {
             new PluginPageInfo
             {
-                Name = "文件大小过滤器配置",
+                Name = "FileSizeFilterConfig",
                 EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html"
             }
         };

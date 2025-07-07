@@ -1,123 +1,75 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>文件大小过滤器配置</title>
-    <style>
-        .configPage {
-            padding: 20px;
-            max-width: 600px;
-        }
-        .fieldDescription {
-            margin-top: 5px;
-            color: #888;
-            font-size: 0.9em;
-        }
-        .inputContainer {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="number"], input[type="checkbox"] {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        input[type="number"] {
-            width: 150px;
-        }
-        .saveButton {
-            background-color: #007ACC;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .saveButton:hover {
-            background-color: #005a9e;
-        }
-        .successMessage {
-            color: green;
-            margin-top: 10px;
-        }
-    </style>
+    <title>文件大小过滤器</title>
 </head>
 <body>
-    <div class="configPage">
-        <h2>文件大小过滤器配置</h2>
-        <p>此插件可以根据文件大小过滤影音库中的文件，避免扫描小文件（如预览图、字幕文件等）。</p>
-        
-        <form id="configForm">
-            <div class="inputContainer">
-                <label>
-                    <input type="checkbox" id="enabled" />
-                    启用文件大小过滤
-                </label>
-                <div class="fieldDescription">勾选此选项以启用基于文件大小的过滤功能</div>
+<div class="page type-interior pluginConfigurationPage FileSizeFilterConfigurationPage" data-require="emby-input,emby-button,emby-checkbox" data-role="page">
+    <div data-role="content">
+        <div class="content-primary">
+
+            <h1>文件大小过滤器</h1>
+
+            <div class="readOnlyContent">
+                <p class="description1">根据文件大小过滤影音库中的文件，避免扫描小文件（如预览图、字幕文件等）。</p>
             </div>
 
-            <div class="inputContainer">
-                <label for="minFileSizeMB">最小文件大小阈值 (MB):</label>
-                <input type="number" id="minFileSizeMB" min="1" max="10000" step="1" />
-                <div class="fieldDescription">
-                    小于此大小的文件将被忽略。建议设置为100MB以过滤掉小文件但保留真正的影音文件。
+            <form class="FileSizeFilterConfigurationForm">
+
+                <div class="verticalSection">
+                    <h2>基本设置</h2>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="chkEnabled" is="emby-checkbox" name="chkEnabled" type="checkbox"/>
+                            <span>启用文件大小过滤</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">勾选此选项以启用基于文件大小的过滤功能</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="txtMinFileSizeMB">最小文件大小阈值 (MB):</label>
+                        <input id="txtMinFileSizeMB" is="emby-input" name="txtMinFileSizeMB" min="1" max="10000" step="1" type="number"/>
+                        <div class="fieldDescription">小于此大小的文件将被从影音库中隐藏（推荐100-500MB）</div>
+                    </div>
                 </div>
-            </div>
 
-            <button type="submit" class="saveButton">保存配置</button>
-            <div id="saveResult" class="successMessage" style="display: none;"></div>
-        </form>
+                <div>
+                    <button class="raised button-submit block" is="emby-button" type="submit">
+                        <span>保存</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
-
     <script type="text/javascript">
-        var pluginId = "6ac83d8b-8a8c-4f4e-9b7c-2d5e8f4a3b1c";
+        var FileSizeFilterPluginConfig = {
+            pluginUniqueId: "6ac83d8b-8a8c-4f4e-9b7c-2d5e8f4a3b1c"
+        };
 
-        function loadConfig() {
-            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                document.getElementById('enabled').checked = config.Enabled || true;
-                document.getElementById('minFileSizeMB').value = config.MinFileSizeMB || 100;
-            }).catch(function (error) {
-                console.error('加载配置失败:', error);
-                // 设置默认值
-                document.getElementById('enabled').checked = true;
-                document.getElementById('minFileSizeMB').value = 100;
+        $('.FileSizeFilterConfigurationPage').on('pageshow', function () {
+            Dashboard.showLoadingMsg();
+            var page = this;
+            ApiClient.getPluginConfiguration(FileSizeFilterPluginConfig.pluginUniqueId).then(function (config) {
+                page.querySelector('#chkEnabled').checked = config.Enabled;
+                $('#txtMinFileSizeMB', page).val(config.MinFileSizeMB).change();
+                Dashboard.hideLoadingMsg();
             });
-        }
-
-        function saveConfig() {
-            var config = {
-                Enabled: document.getElementById('enabled').checked,
-                MinFileSizeMB: parseInt(document.getElementById('minFileSizeMB').value) || 100
-            };
-
-            ApiClient.updatePluginConfiguration(pluginId, config).then(function () {
-                var saveResult = document.getElementById('saveResult');
-                saveResult.textContent = '配置已保存成功！';
-                saveResult.style.display = 'block';
-                
-                setTimeout(function() {
-                    saveResult.style.display = 'none';
-                }, 3000);
-            }).catch(function (error) {
-                console.error('保存配置失败:', error);
-                alert('保存配置失败，请检查设置并重试。');
-            });
-        }
-
-        document.getElementById('configForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            saveConfig();
         });
 
-        // 页面加载时载入配置
-        document.addEventListener('DOMContentLoaded', function() {
-            loadConfig();
+        $('.FileSizeFilterConfigurationForm').on('submit', function () {
+            Dashboard.showLoadingMsg();
+            var form = this;
+            ApiClient.getPluginConfiguration(FileSizeFilterPluginConfig.pluginUniqueId).then(function (config) {
+                config.Enabled = $('#chkEnabled', form).prop('checked');
+                config.MinFileSizeMB = parseInt($('#txtMinFileSizeMB', form).val()) || 100;
+                ApiClient.updatePluginConfiguration(FileSizeFilterPluginConfig.pluginUniqueId, config).then(Dashboard.processPluginConfigurationUpdateResult);
+            });
+            // Disable default form submission
+            return false;
         });
     </script>
+</div>
 </body>
 </html> 
